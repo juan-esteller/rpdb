@@ -43,18 +43,16 @@ class Rpdb(pdb.Pdb):
         # Open a 'reusable' socket to let the webapp reload on the same port
         self.skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.skt.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, True)
-        self.skt.bind((addr, port))
-        self.skt.listen(1)
+        self.skt.connect((addr, port))
 
         # Writes to stdout are forbidden in mod_wsgi environments
         try:
-            sys.stderr.write("pdb is running on %s:%d\n"
+            sys.stderr.write("pdb is connecting to %s:%d\n"
                              % self.skt.getsockname())
         except IOError:
             pass
 
-        (clientsocket, address) = self.skt.accept()
-        handle = clientsocket.makefile('rw')
+        handle = self.skt.makefile('rw')
         pdb.Pdb.__init__(self, completekey='tab',
                          stdin=FileObjectWrapper(handle, self.old_stdin),
                          stdout=FileObjectWrapper(handle, self.old_stdin))
